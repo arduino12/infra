@@ -26,8 +26,12 @@ cd ~
 # python3 packages
 sudo pip3 install --upgrade pip
 sudo pip3 install ipython rpyc pygame Pillow
+sudo pip3 install --upgrade pyserial
 
 # audo serial port naming
 sudo nano /etc/udev/rules.d/90-usb-serial.rules
 SUBSYSTEM=="tty",KERNELS=="1-1.2:1.0",SYMLINK+="arduino_uv"
 SUBSYSTEM=="tty",KERNELS=="1-1.4:1.0",SYMLINK+="gsm_a6"
+
+# chmodes
+sudo chmod +x *.sh
