@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 
 import logging
-from core.ansi import Ansi
+from infra.core.ansi import Ansi
 
 
 class Logor(object):

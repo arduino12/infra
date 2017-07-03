@@ -34,10 +34,14 @@ class A6Gsm(ATProtocol):
     def _connection_made(self, index):
         time.sleep(0.5)
         index = int(index.split('_')[-1])
-        if index == 0:
-            self.send_command('ATE0')
-        else:
-            self.send_command('AT+CMGF=0')
+        try:
+            if index == 0:
+                self.send_command('ATE0')
+            else:
+                self.send_command('AT+CMGF=0')
+                return
+        except Exception:
+            print('error: a6_gsm did not respond')
             return
         self.events.put('connection_made_%s' % (index + 1))
 
