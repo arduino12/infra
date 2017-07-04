@@ -35,3 +35,33 @@ SUBSYSTEM=="tty",KERNELS=="1-1.4:1.0",SYMLINK+="gsm_a6"
 
 # chmodes
 sudo chmod +x *.sh
+
+# systemd service
+cd /lib/systemd/system/
+sudo nano uv_bicycle.service
+
+[Unit]
+Description=UV Bicycle
+After=multi-user.target
+
+[Service]
+Type=simple
+ExecStart=/bin/bash /home/pi/Public/uv_bicycle/run_gsm_to_arduino.sh
+Restart=on-abort
+
+[Install]
+WantedBy=multi-user.target
+
+sudo chmod 644 /lib/systemd/system/uv_bicycle.service
+sudo systemctl daemon-reload
+sudo systemctl enable uv_bicycle.service
+sudo systemctl start uv_bicycle.service
+
+# Check status
+sudo systemctl status uv_bicycle.service
+# Start service
+sudo systemctl start uv_bicycle.service
+# Stop service
+sudo systemctl stop uv_bicycle.service
+# Check service's log
+sudo journalctl -f -u hello.service
