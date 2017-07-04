@@ -37,8 +37,7 @@ SUBSYSTEM=="tty",KERNELS=="1-1.4:1.0",SYMLINK+="gsm_a6"
 sudo chmod +x *.sh
 
 # systemd service
-cd /lib/systemd/system/
-sudo nano uv_bicycle.service
+sudo nano /lib/systemd/system/uv_bicycle.service
 
 [Unit]
 Description=UV Bicycle
@@ -46,7 +45,7 @@ After=multi-user.target
 
 [Service]
 Type=simple
-ExecStart=/bin/bash /home/pi/Public/uv_bicycle/run_gsm_to_arduino.sh
+ExecStart=/bin/bash /home/pi/Public/uv_bicycle/run_gsm_to_arduino.sh --interface rpyc
 Restart=on-abort
 
 [Install]
