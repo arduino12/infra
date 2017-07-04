@@ -9,7 +9,7 @@ class App(object):
 
     def reconnect(self):
         self.disconnect()
-        self._conn = rpyc.connect('', rpyc.utils.classic.DEFAULT_SERVER_PORT)
+        self._conn = rpyc.connect('localhost', rpyc.utils.classic.DEFAULT_SERVER_PORT)
         self.reload(False)
 
     def disconnect(self):
