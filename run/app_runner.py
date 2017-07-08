@@ -1,45 +1,38 @@
-import sys
-import os.path
+import logging
 import argparse
 import importlib
 import rpyc
 import rpyc.utils.server
 import IPython.terminal.embed as _ipython
-
-
-# set PYTHONPATH
-_base_path = os.path.abspath(os.path.dirname(os.path.dirname(os.path.dirname(os.path.realpath(__file__)))))
-sys.path.extend([_base_path])
-
-
-import infra.core.utils
+import common
+from infra.core import utils
 
 
 class _App(object):
     
     def __init__(self, app):
         self._app_ = None
+        self._app_attrs_ = []
         self._app_module_ = importlib.import_module(app)
+        self._base_app_module_ = importlib.import_module('infra.app.app')
         self._load_()
     
     def _reload_(self):
         self._unload_()
         importlib.invalidate_caches()
-        if hasattr(self._app_, '_modules'):
-            for i in self._app_._modules:
-                print('reloading %s' % (i.__name__,))
-                importlib.reload(i)
-        print('reloading %s' % (self._app_module_.__name__,))
-        importlib.reload(self._app_module_)
+        for i in self._app_._modules:
+            print('reloading %s' % (i.__name__,))
+            importlib.reload(i)
         self._load_()
 
     def _load_(self):
-        self._app_ = getattr(self._app_module_, infra.core.utils.module_to_class_name(
+        self._app_ = getattr(self._app_module_, utils.module_to_class_name(
             self._app_module_.__name__.rsplit('.', 1)[1]))()
+        self._app_._modules = [self._base_app_module_, self._app_module_]
         self._app_.reload = self._reload_
-        for i in dir(self._app_):
-            if not i.startswith('__'):
-                setattr(self, i, getattr(self._app_, i))
+        utils.delattrs(self, self._app_attrs_)
+        self._app_attrs_ = utils.get_exposed_attrs(self._app_)
+        utils.cpyattrs(self._app_, self, self._app_attrs_)
 
     def _unload_(self):
         if hasattr(self._app_, '__exit__'):
@@ -47,9 +40,9 @@ class _App(object):
 
 
 class _AppService(rpyc.Service):
-
+    _logger = logging.getLogger('Rpyc')
     def on_connect(self):
-        print('AppService.on_connect')
+        self._logger.info('on_connect')
         self._conn._config.update(dict(
             allow_all_attrs = True,
             allow_pickle = True,
@@ -63,7 +56,7 @@ class _AppService(rpyc.Service):
         self.exposed_app = globals()['app']
 
     def on_disconnect(self):
-        print('AppService.on_disconnect')
+        self._logger.info('on_disconnect')
 
 
 if __name__ == '__main__':
@@ -93,5 +86,6 @@ if __name__ == '__main__':
     elif _args.interface == 'rpyc':
         rpyc.utils.server.ThreadedServer(
             service=_AppService,
-            port=rpyc.utils.classic.DEFAULT_SERVER_PORT).start()
+            port=rpyc.utils.classic.DEFAULT_SERVER_PORT,
+            logger=_AppService._logger).start()
     app._unload_()
