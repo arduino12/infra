@@ -62,9 +62,9 @@ cd ~
 
 ### python3 packages ###
 sudo pip3 install --upgrade pip
-sudo pip3 install ipython rpyc pygame Pillow
-sudo pip3 install --upgrade pyserial
-python3 -m pip install django pygame
+sudo pip3 install --upgrade ipython rpyc pyserial
+# sudo pip3 install --upgrade pygame Pillow
+python3 -m pip install django
 
 ### systemd service ###
 sudo nano /lib/systemd/system/uv_bicycle.service
@@ -119,7 +119,7 @@ sudo nano /etc/udev/rules.d/ttyUSB.rules
 KERNEL=="ttyUSB[0 … 9]" SYMLINK+="%k" GROUP="lab" MODE="0666"
 
 ### miniterm ###
-python3 /usr/local/lib/python3.6/site-packages/serial/tools/miniterm.py /dev/ttyUSB1 38400 --eol CRLF
+python3 /usr/local/lib/python3.6/site-packages/serial/tools/miniterm.py /dev/ttyUSB0 38400 --eol CRLF
 
 ### samba ###
 sudo smbpasswd -a pi; ; 
