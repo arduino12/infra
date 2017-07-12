@@ -121,6 +121,10 @@ KERNEL=="ttyUSB[0 … 9]" SYMLINK+="%k" GROUP="lab" MODE="0666"
 ### miniterm ###
 python3 /usr/local/lib/python3.6/site-packages/serial/tools/miniterm.py /dev/ttyUSB0 38400 --eol CRLF
 
+### arduino ###
+~/Public/arduino/arduino --board arduino:avr:pro --port /dev/ttyUSB0 --upload ~/Public/uv_bicycle/src/arduino_to_uv/arduino_to_uv.ino
+~/Public/arduino/arduino --board arduino:avr:pro --verify ~/Public/uv_bicycle/src/arduino_to_uv/arduino_to_uv.ino
+
 ### samba ###
 sudo smbpasswd -a pi; ; 
 sudo nano /etc/samba/smb.conf
@@ -173,3 +177,4 @@ sudo mv Downloads/playlist_youtube.lua /usr/lib/vlc/lua/playlist/
 # https://www.silabs.com/products/mcu/Pages/USBtoUARTBridgeVCPDrivers.aspx
 # https://www.silabs.com/Support%20Documents/Software/Linux_CP210x_VCP_3.x.x_Release_Notes.txt
 # http://www.oracle.com/webfolder/technetwork/tutorials/obe/java/RaspberryPiFX/raspberryfx.html
+# http://pblog.ebaker.me.uk/2014/01/uploading-arduino-sketch-from-raspberry.html
