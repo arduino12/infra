@@ -29,6 +29,7 @@ cat /proc/cpuinfo
 sudo raspi-config
 sudo echo "display_rotate=2" >> /boot/config.txt
 sudo echo "enable_uart=1" >> /boot/config.txt
+sudo echo "audio_pwm_mode=2" >> /boot/config.txt
 
 ### upgrade ###
 sudo apt-get update && sudo apt-get upgrade -y
@@ -63,8 +64,10 @@ cd ~
 ### python3 packages ###
 sudo pip3 install --upgrade pip
 sudo pip3 install --upgrade ipython rpyc pyserial
-# sudo pip3 install --upgrade pygame Pillow
+# sudo pip3 install --upgrade Pillow
 python3 -m pip install django
+sudo apt-get install libsdl-dev libsdl-image1.2-dev libsdl-mixer1.2-dev libsdl-ttf2.0-dev libsmpeg-dev libportmidi-dev libavformat-dev libswscale-dev -y # python3-dev python3-numpy -y
+sudo pip3 install --upgrade pygame
 
 ### systemd service ###
 sudo nano /lib/systemd/system/uv_bicycle.service
@@ -143,6 +146,19 @@ wins support = yes
  public=yes
 sudo chmod a+w Public/
 sudo /etc/init.d/samba restart
+
+### usb network ###
+sudo nano /etc/network/interfaces
+allow-hotplug usb0
+iface usb0 inet static
+        address 192.168.42.1
+        netmask 255.255.255.0
+        network 192.168.42.0
+        gateway 192.168.42.129
+        broadcast 192.168.42.255
+iface usb0 inet dhcp
+
+sudo ifdown usb0; sudo ifup usb0; ping google.com
 
 ### language ###
 sudo setxkbmap -option grp:switch,grp:alt_shift_toggle,grp_led:scroll de,tr,us
