@@ -40,7 +40,7 @@ EOF
 
 cat > /etc/dnsmasq.conf <<EOF
 interface=wlan0
-dhcp-range=10.0.0.2,10.0.0.5,255.255.255.0,12h
+dhcp-range=10.0.0.2,10.0.0.3,255.255.255.0,12h
 EOF
 
 cat > /etc/hostapd/hostapd.conf <<EOF
@@ -54,6 +54,7 @@ wpa_pairwise=CCMP
 rsn_pairwise=CCMP
 wpa_passphrase=$APPASS
 ssid=$APSSID
+ignore_broadcast_ssid=1
 EOF
 
 sed -i -- 's/allow-hotplug wlan0//g' /etc/network/interfaces

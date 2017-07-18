@@ -31,6 +31,9 @@ sudo echo "display_rotate=2" >> /boot/config.txt
 sudo echo "enable_uart=1" >> /boot/config.txt
 sudo echo "audio_pwm_mode=2" >> /boot/config.txt
 
+### volume ###
+amixer set PCM -- 96%
+
 ### upgrade ###
 sudo apt-get update && sudo apt-get upgrade -y
 sudo apt-get dist-upgrade -y
