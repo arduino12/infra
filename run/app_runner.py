@@ -69,7 +69,7 @@ if __name__ == '__main__':
         dest='interface',
         type=str,
         default='ipython',
-        choices=('ipython', 'rpyc'),
+        choices=('ipython', 'rpyc', 'none'),
         help='the app interface')
     _parser.add_argument(
         '--app',
@@ -78,14 +78,30 @@ if __name__ == '__main__':
         type=str,
         required=True,
         help='the app package')
+    _parser.add_argument(
+        '--rpyc_port',
+        metavar='<port number>',
+        dest='rpyc_port',
+        type=int,
+        default=rpyc.utils.classic.DEFAULT_SERVER_PORT,
+        help='the remote app rpyc port')
+    _parser.add_argument(
+        '--cmd',
+        metavar='<python line>',
+        dest='cmd',
+        type=str,
+        default='',
+        help='python line to run after app creation')
 
     _args, _ = _parser.parse_known_args()
     app = _App(_args.app)
+    if _args.cmd:
+        exec(_args.cmd) # eval(_args.cmd)
     if _args.interface == 'ipython':
         _ipython.InteractiveShellEmbed()()
     elif _args.interface == 'rpyc':
         rpyc.utils.server.ThreadedServer(
             service=_AppService,
-            port=rpyc.utils.classic.DEFAULT_SERVER_PORT,
+            port=_args.rpyc_port,
             logger=_AppService._logger).start()
     app._unload_()
