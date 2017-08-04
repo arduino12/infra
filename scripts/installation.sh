@@ -31,6 +31,14 @@ sudo echo "display_rotate=2" >> /boot/config.txt
 sudo echo "enable_uart=1" >> /boot/config.txt
 sudo echo "audio_pwm_mode=2" >> /boot/config.txt
 
+### wifi ###
+sudo nano /etc/wpa_supplicant/wpa_supplicant.conf
+network={
+	ssid="MADA"
+	# psk="testingPassword"
+	key_mgmt=NONE
+}
+
 ### volume ###
 amixer set PCM -- 96%
 
@@ -89,13 +97,15 @@ sudo systemctl daemon-reload
 sudo systemctl enable uv_bicycle.service
 sudo systemctl start uv_bicycle.service
 # Check status
-sudo systemctl status uv_bicycle.service
+sudo systemctl status uv_bicycle.service -l
 # Start service
 sudo systemctl start uv_bicycle.service
 # Stop service
 sudo systemctl stop uv_bicycle.service
 # Check service's log
-sudo journalctl -f -u hello.service
+sudo journalctl -f -u uv_bicycle.service
+# Output file's content while it change
+tail -f /home/pi/Public/sms.log
 
 ### bluetooth ###
 # https://www.cnet.com/how-to/how-to-setup-bluetooth-on-a-raspberry-pi-3/
