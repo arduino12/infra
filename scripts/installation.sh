@@ -19,24 +19,29 @@
 
 ### user ###
 default: pi raspberry
-# set password to "none", ";" is \n
-sudo passwd pi; none; none
+# set password to "none"
+echo -ne "none\nnone\n" | sudo passwd pi
+echo -ne "none\nnone\n" | sudo passwd root
 
 ### info ###
 cat /proc/cpuinfo
 
 ### config ###
+# update, set hostname to rpi, set localisation timezone to asia jerusalem, advanced expand filesystem
 sudo raspi-config
-sudo echo "display_rotate=2" >> /boot/config.txt
-sudo echo "enable_uart=1" >> /boot/config.txt
-sudo echo "audio_pwm_mode=2" >> /boot/config.txt
+sudo sh -c "echo 'display_rotate=2' >> /boot/config.txt"
+sudo sh -c "echo 'enable_uart=1' >> /boot/config.txt"
+sudo sh -c "echo 'audio_pwm_mode=2' >> /boot/config.txt"
+sudo sh -c "echo 'pi3-disable-bt' >> /boot/config.txt"
+sudo sh -c "echo 'dtoverlay=pi3-disable-wifi' >> /boot/config.txt"
 
 ### wifi ###
 sudo nano /etc/wpa_supplicant/wpa_supplicant.conf
 network={
 	ssid="MADA"
-	# psk="testingPassword"
 	key_mgmt=NONE
+	# psk="madaorgil"
+	# key_mgmt=WPA-PSK
 }
 
 ### volume ###
@@ -69,7 +74,7 @@ cd Python-$RELEASE
 ./configure
 make
 sudo make install
-sudo rm -rf ~/python3/Python-$RELEASE
+sudo rm -rf ~/python3
 cd ~
 
 ### python3 packages ###
@@ -142,10 +147,11 @@ python3 /usr/local/lib/python3.6/site-packages/serial/tools/miniterm.py /dev/tty
 ~/Public/arduino/arduino --board arduino:avr:pro --verify ~/Public/uv_bicycle/src/arduino_to_uv/arduino_to_uv.ino
 
 ### samba ###
-sudo smbpasswd -a pi; ; 
-sudo nano /etc/samba/smb.conf
-force user=pi
-workgroup = WORKGROUP
+mkdir /home/pi/Public
+sudo chmod a+w /home/pi/Public
+echo -ne "\n\n" | sudo smbpasswd -a pi
+sudo sh -c "cat >> /etc/samba/smb.conf <<EOF
+force user = pi
 wins support = yes
 
 [Public]
@@ -157,18 +163,18 @@ wins support = yes
  create mask=0777
  directory mask=0777
  public=yes
-sudo chmod a+w Public/
+EOF"
 sudo /etc/init.d/samba restart
 
 ### usb network ###
 sudo nano /etc/network/interfaces
 allow-hotplug usb0
 iface usb0 inet static
-        address 192.168.42.1
-        netmask 255.255.255.0
-        network 192.168.42.0
-        gateway 192.168.42.129
-        broadcast 192.168.42.255
+	address 192.168.42.1
+	netmask 255.255.255.0
+	network 192.168.42.0
+	gateway 192.168.42.129
+	broadcast 192.168.42.255
 iface usb0 inet dhcp
 
 sudo ifdown usb0; sudo ifup usb0; ping google.com
