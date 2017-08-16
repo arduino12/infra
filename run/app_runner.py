@@ -40,7 +40,8 @@ class _App(object):
 
 
 class _AppService(rpyc.Service):
-    _logger = logging.getLogger('Rpyc')
+    _logger = logging.getLogger('rpyc')
+    _logger.setLevel(logging.INFO)
     def on_connect(self):
         self._logger.info('on_connect')
         self._conn._config.update(dict(

@@ -5,10 +5,6 @@ import threading
 import serial.threaded
 
 
-class ATException(Exception):
-    pass
-
-
 class ATProtocol(serial.threaded.Protocol):
 
     SEND_TERMINATOR = b'\r'
@@ -23,23 +19,24 @@ class ATProtocol(serial.threaded.Protocol):
         self.transport = None
         self.events = queue.Queue()
         self.responses = queue.Queue()
-        self._event_thread = threading.Thread(target=self._run_event)
-        self._event_thread.daemon = True
-        self._event_thread.name = 'at_protocol_event'
+        self._event_thread = threading.Thread(target=self._run_event, name='at_protocol_event', daemon=True)
         self._event_thread.start()
 
     def _run_event(self):
         while True:
             try:
+                self._logger.debug('_run_event: start')
                 self._handle_event(self.events.get())
+                self._logger.debug('_run_event: end')
             except:
-                logging.exception('_run_event')
+                self._logger.exception('_run_event')
 
     def connection_made(self, transport):
         self.transport = transport
         self.transport.serial.reset_input_buffer()
 
     def connection_lost(self, exc):
+        self._logger.warning('connection_lost: %s', exc)
         self.transport = None
         serial.threaded.Protocol.connection_lost(self, exc)
 
@@ -48,6 +45,7 @@ class ATProtocol(serial.threaded.Protocol):
         while self.REVC_TERMINATOR in self.buffer:
             packet, self.buffer = self.buffer.split(self.REVC_TERMINATOR, 1)
             if packet:
+                self._logger.debug('packet_received: %r', packet)
                 self.packet_received(packet.decode(self.ENCODING))
 
     def packet_received(self, packet):
@@ -61,19 +59,20 @@ class ATProtocol(serial.threaded.Protocol):
             self.transport.write(packet.encode(self.ENCODING) + self.SEND_TERMINATOR)
 
     def _handle_event(self, event):
-        print('event received:', event)
+        self._logger.debug('event received: %s', event)
 
     def send_command(self, command, response='OK', timeout=1):
         with self.response_lock:
+            self._logger.debug('%s ->', command)
             self.send_packet(command)
             lines = []
             while True:
                 try:
                     line = self.responses.get(timeout=timeout)
-                    print('%s -> %r' % (command, line))
+                    self._logger.debug('-> %r', line)
                     if line == response:
                         return lines
                     else:
                         lines.append(line)
                 except queue.Empty:
-                    raise ATException('AT command timeout ({!r})'.format(command))
+                    raise TimeoutError(command)

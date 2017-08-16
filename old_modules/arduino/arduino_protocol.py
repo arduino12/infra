@@ -4,10 +4,6 @@ import threading
 import serial.threaded
 
 
-class ArduinoException(Exception):
-    pass
-
-
 class ArduinoProtocol(serial.threaded.Protocol):
 
     SEND_TERMINATOR = b'\r'
@@ -25,22 +21,24 @@ class ArduinoProtocol(serial.threaded.Protocol):
         self.events = queue.Queue()
         self.responses = queue.Queue()
         self._event_thread = threading.Thread(target=self._run_event)
-        self._event_thread.daemon = True
-        self._event_thread.name = 'arduino_protocol_event'
+        self._event_thread = threading.Thread(target=self._run_event, name='arduino_protocol_event', daemon=True)
         self._event_thread.start()
 
     def _run_event(self):
         while True:
             try:
+                self._logger.debug('_run_event: start')
                 self._handle_event(self.events.get())
+                self._logger.debug('_run_event: end')
             except:
-                logging.exception('_run_event')
+                self._logger.exception('_run_event')
 
     def connection_made(self, transport):
         self.transport = transport
         self.transport.serial.reset_input_buffer()
 
     def connection_lost(self, exc):
+        self._logger.warning('connection_lost: %s', exc)
         self.transport = None
         serial.threaded.Protocol.connection_lost(self, exc)
 
@@ -52,6 +50,7 @@ class ArduinoProtocol(serial.threaded.Protocol):
                 self.packet_received(packet.decode(*self.ENCODING))
 
     def packet_received(self, packet):
+        self._logger.debug('packet_received: %s', packet)
         if self.response_lock.locked():
             self.responses.put(packet)
         else:
@@ -62,19 +61,20 @@ class ArduinoProtocol(serial.threaded.Protocol):
             self.transport.write(packet.encode(*self.ENCODING) + self.SEND_TERMINATOR)
 
     def _handle_event(self, event):
-        print('event received:', event)
+        self._logger.debug('event received: %s', event)
 
     def send_command(self, command, response='\n', timeout=1):
         with self.response_lock:
+            self._logger.debug('%s ->', command)
             self.send_packet(command)
             lines = []
             while True:
                 try:
                     line = self.responses.get(timeout=timeout)
-                    print('%s -> %r' % (command, line))
+                    self._logger.debug('-> %r', line)
                     if line.endswith(response):
                         return lines
                     else:
                         lines.append(line)
                 except queue.Empty:
-                    raise ArduinoException('command timeout ({!r})'.format(command))
+                    raise TimeoutError(command)
