@@ -1,6 +1,3 @@
-import logging
-
-
 from infra.old_modules.arduino.arduino_protocol import ArduinoProtocol
 
 
@@ -8,15 +5,9 @@ class UvBicycle(ArduinoProtocol):
 
     def __init__(self):
         ArduinoProtocol.__init__(self)
-        self._events_handlers = {
-
-        }
 
     def _handle_event(self, event):
-        for event_start in self._events_handlers:
-            if event.startswith(event_start):
-                return self._events_handlers[event_start](event)
-        logging.warning('unhandled event: {!r}'.format(event))
+        pass
 
     def set_slice_on_ms(self, ms):
         self.send_command('A %s' % (ms,), response=str(ms))
