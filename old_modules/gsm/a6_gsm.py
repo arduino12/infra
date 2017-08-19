@@ -1,7 +1,7 @@
 import time
 
 from infra.old_modules.gsm.at_protocol import ATProtocol
-from infra.old_modules.gsm.pdu import decodeSmsPdu
+from infra.old_modules.gsm.pdu import decodeSmsPdu, EncodingError
 
 
 class A6Gsm(ATProtocol):
@@ -85,7 +85,11 @@ class A6Gsm(ATProtocol):
         return number.replace('+972', '0')
 
     def _sms_recived(self, event):
-        sms = decodeSmsPdu(bytes(event, 'latin-1'))
+        try:
+            sms = decodeSmsPdu(bytes(event, 'latin-1'))
+        except EncodingError:
+            self._logger.warning('_sms_recived EncodingError: %s', event)
+            return
         text = sms['text']
         send_time = sms['time']
         number = sms['number']
