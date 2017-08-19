@@ -34,6 +34,20 @@ sudo sh -c "echo 'enable_uart=1' >> /boot/config.txt"
 sudo sh -c "echo 'audio_pwm_mode=2' >> /boot/config.txt"
 sudo sh -c "echo 'pi3-disable-bt' >> /boot/config.txt"
 sudo sh -c "echo 'dtoverlay=pi3-disable-wifi' >> /boot/config.txt"
+sudo sh -c "echo 'max_usb_current=1' >> /boot/config.txt"
+
+### aliases ###
+nano /home/pi/.bash_aliases
+alias ll='ls -lhA'
+alias ..='cd ..'
+alias df='df -H'
+alias du='du -ch'
+chr() {
+  printf \\$(printf '%03o' $1)\\n
+}
+ord() {
+  printf '%d\n' "'$1"
+}
 
 ### wifi ###
 sudo nano /etc/wpa_supplicant/wpa_supplicant.conf
@@ -79,14 +93,14 @@ cd ~
 
 ### python3 packages ###
 sudo pip3 install --upgrade pip
-sudo pip3 install --upgrade ipython rpyc pyserial
+sudo pip3 install --upgrade ipython rpyc pyserial pygsheets
 # sudo pip3 install --upgrade Pillow
 python3 -m pip install django
 sudo apt-get install libsdl-dev libsdl-image1.2-dev libsdl-mixer1.2-dev libsdl-ttf2.0-dev libsmpeg-dev libportmidi-dev libavformat-dev libswscale-dev -y # python3-dev python3-numpy -y
 sudo pip3 install --upgrade pygame
 
 ### systemd service ###
-sudo nano /lib/systemd/system/uv_bicycle.service
+sudo sh -c "cat > /lib/systemd/system/uv_bicycle.service <<EOF
 [Unit]
 Description=UV Bicycle
 After=multi-user.target
@@ -96,21 +110,26 @@ ExecStart=/bin/bash /home/pi/Public/uv_bicycle/run_gsm_to_arduino.sh --interface
 Restart=on-abort
 [Install]
 WantedBy=multi-user.target
+EOF"
 # after changing uv_bicycle.service run daemon-reload
 sudo chmod 644 /lib/systemd/system/uv_bicycle.service
 sudo systemctl daemon-reload
 sudo systemctl enable uv_bicycle.service
 sudo systemctl start uv_bicycle.service
-# Check status
+# save journalctl logs
+sudo mkdir /var/log/journal
+sudo systemd-tmpfiles --create --prefix /var/log/journal
+sudo systemctl restart systemd-journald
+# check status
 sudo systemctl status uv_bicycle.service -l
-# Start service
-sudo systemctl start uv_bicycle.service
-# Stop service
+# retart service
+sudo systemctl restart uv_bicycle.service
+# stop service
 sudo systemctl stop uv_bicycle.service
-# Check service's log
-sudo journalctl -f -u uv_bicycle.service
+# check service's log
+sudo journalctl --no-tail --no-pager -m -o cat -u uv_bicycle.service
 # Output file's content while it change
-tail -f /home/pi/Public/sms.log
+tail -f /home/pi/Public/sms_log.txt
 
 ### bluetooth ###
 # https://www.cnet.com/how-to/how-to-setup-bluetooth-on-a-raspberry-pi-3/
@@ -129,8 +148,8 @@ sudo rfcomm connect hci0 98:D3:31:90:30:3A &
 udevadm info -q path -n /dev/ttyUSB1
 # auto serial port shortcuts
 sudo nano /etc/udev/rules.d/90-usb-serial.rules
-SUBSYSTEM=="tty",KERNELS=="1-1.2:1.0",SYMLINK+="arduino_uv"
-SUBSYSTEM=="tty",KERNELS=="1-1.4:1.0",SYMLINK+="gsm_a6"
+SUBSYSTEM=="tty",KERNELS=="1-1.2:1.0",SYMLINK+="ttyAiGsm"
+SUBSYSTEM=="tty",KERNELS=="1-1.4:1.0",SYMLINK+="ttyUvBicycle"
 # ttyUSB
 sudo chmod 666 /dev/ttyUSB0
 lsmod | grep cp210x
@@ -138,6 +157,8 @@ dmesg
 ls -la /dev/ttyUSB*
 sudo nano /etc/udev/rules.d/ttyUSB.rules
 KERNEL=="ttyUSB[0 … 9]" SYMLINK+="%k" GROUP="lab" MODE="0666"
+# reset bus power
+for i in "unbind" "bind"; do sudo sh -c "echo 1-1 > /sys/bus/usb/drivers/usb/$i" && sleep 5; done
 
 ### miniterm ###
 python3 /usr/local/lib/python3.6/site-packages/serial/tools/miniterm.py /dev/ttyUSB0 38400 --eol CRLF
@@ -150,7 +171,7 @@ python3 /usr/local/lib/python3.6/site-packages/serial/tools/miniterm.py /dev/tty
 mkdir /home/pi/Public
 sudo chmod a+w /home/pi/Public
 echo -ne "\n\n" | sudo smbpasswd -a pi
-sudo sh -c "cat >> /etc/samba/smb.conf <<EOF
+sudo nano /etc/samba/smb.conf
 force user = pi
 wins support = yes
 
@@ -163,8 +184,32 @@ wins support = yes
  create mask=0777
  directory mask=0777
  public=yes
-EOF"
+
 sudo /etc/init.d/samba restart
+
+### dataplicity ###
+curl https://www.dataplicity.com/n8ccp0y7.py | sudo python
+# remove agent
+sudo rm -f /etc/supervisor/conf.d/tuxtunnel.conf
+sudo service supervisor restart
+sudo rm -r /var/log/supervisor
+sudo apt-get purge supervisor -y
+sudo rm -r /opt/dataplicity
+sudo rm -r /etc/supervisor
+sudo userdel dataplicity
+sudo reboot
+# video stream
+ls /dev | grep vid
+sudo apt-get install libjpeg8-dev imagemagick libv4l-dev
+wget http://terzo.acmesystems.it/download/webcam/mjpg-streamer.tar.gz
+tar -xvzf mjpg-streamer.tar.gz
+sudo ln -s /usr/include/libv4l1-videodev.h /usr/include/linux/videodev.h
+cd mjpg-streamer/
+nano Makefile # PLUGINS += input_gspcav1.so
+make
+sudo ./mjpg_streamer -i "./input_uvc.so -f 10 -r 640x480 -n -y" -o "./output_http.so -w ./www -p 80"
+https://<YOUR_ID>.dataplicity.io/stream_simple.html
+http://192.168.1.108:80/?action=stream
 
 ### usb network ###
 sudo nano /etc/network/interfaces
@@ -205,6 +250,10 @@ sudo rm /usr/lib/vlc/lua/playlist/youtube.*
 sudo curl "http://git.videolan.org/?p=vlc.git;a=blob_plain;f=share/lua/playlist/youtube.lua;hb=HEAD" -o /usr/lib/vlc/lua/playlist/youtube.lua
 http://addons.videolan.org/content/show.php/+Youtube+playlist?content=149909
 sudo mv Downloads/playlist_youtube.lua /usr/lib/vlc/lua/playlist/
+
+### infra ###
+cd ~/Public && git clone https://github.com/arduino12/infra
+touch ~/Public/__init__.py
 
 ### links ###
 # https://mtantawy.com/quick-tip-how-to-update-to-latest-kodi-16-jarvis-on-raspberry-pi/
