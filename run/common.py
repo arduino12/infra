@@ -11,7 +11,7 @@ sys.path.append(BASIC_PATH)
 
 from infra.core.ansi import Ansi
 
-DATETIME_FORMAT = '%Y-%02m-%02d %02H:%02M:%02S'
+DATETIME_FORMAT = '%Y-%m-%d %H:%M:%S'
 
 IS_WINDOWS = (os.name == 'nt')
 
