@@ -1,5 +1,8 @@
 import time
+import logging
+import datetime
 
+from infra.run import common
 from infra.old_modules.gsm.at_protocol import ATProtocol
 from infra.old_modules.gsm.pdu import decodeSmsPdu, EncodingError
 
@@ -10,6 +13,8 @@ class A6Gsm(ATProtocol):
     """
     CALL_RING_TIME = 3
 
+    _logger = logging.getLogger('a6_gsm')
+
     def __init__(self):
         ATProtocol.__init__(self)
         self._events_handlers = {
@@ -17,6 +22,10 @@ class A6Gsm(ATProtocol):
             '+CME ': self._handle_idle,
             '+CMT:': self._handle_idle,
             '+CIEV:': self._handle_idle,
+            '+CTZV:': self._handle_time,
+            '+CREG:': self._handle_idle,
+            '^CINIT:': self._handle_idle,
+            '^STN:': self._handle_idle,
             'RING': self._call_recived,
             'NO ANSWER': self._handle_idle,
             'ERROR': self._handle_idle,
@@ -119,6 +128,14 @@ class A6Gsm(ATProtocol):
         if (cur_time - self._last_call_time) > self.CALL_RING_TIME:
             self.call_recived()
         self._last_call_time = cur_time
+
+    def _handle_time(self, event):
+        try:
+            utc, offset = event.rsplit(',', 1)
+            gsm_time = datetime.datetime.strptime(utc, '+CTZV:%y/%m/%d,%H:%M:%S') + datetime.timedelta(hours=float(offset))
+            self._logger.info('gsm_time report: %s', gsm_time.strftime(common.DATETIME_FORMAT))
+        except:
+            self._logger.error('bad CTZV: %s', event)
 
     def _handle_idle(self, *args):
         pass

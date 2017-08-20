@@ -5,6 +5,7 @@ import rpyc
 import rpyc.utils.server
 import IPython.terminal.embed as _ipython
 import common
+
 from infra.core import utils
 
 
@@ -28,7 +29,7 @@ class _App(object):
     def _load_(self):
         self._app_ = getattr(self._app_module_, utils.module_to_class_name(
             self._app_module_.__name__.rsplit('.', 1)[1]))()
-        self._app_._modules = [self._base_app_module_, self._app_module_]
+        self._app_._modules.extend([self._base_app_module_, self._app_module_])
         self._app_.reload = self._reload_
         utils.delattrs(self, self._app_attrs_)
         self._app_attrs_ = utils.get_exposed_attrs(self._app_)

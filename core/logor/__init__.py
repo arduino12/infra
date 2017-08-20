@@ -1,5 +1,3 @@
-#!/usr/bin/env python
-
 import logging
 from infra.core.ansi import Ansi
 
@@ -16,7 +14,6 @@ class Logor(object):
         for handler in logging.root.handlers:
             logging.root.removeHandler(handler)
         logging.root.addHandler(handler)
-        logging.log(level, "Logging level: %s", logging.getLevelName(level))
 
 
 class ColorFormatter(logging.Formatter):
