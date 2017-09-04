@@ -35,6 +35,7 @@ sudo sh -c "echo 'audio_pwm_mode=2' >> /boot/config.txt"
 sudo sh -c "echo 'pi3-disable-bt' >> /boot/config.txt"
 sudo sh -c "echo 'dtoverlay=pi3-disable-wifi' >> /boot/config.txt"
 sudo sh -c "echo 'max_usb_current=1' >> /boot/config.txt"
+sudo sh -c "echo 'dtparam=audio=off' >> /boot/config.txt"
 
 ### aliases ###
 nano /home/pi/.bash_aliases
@@ -70,7 +71,7 @@ sudo rpi-update
 sudo chmod +x *.sh
 
 ### apps ###
-sudo apt-get install git samba samba-common-bin -y
+sudo apt-get install fswebcam git samba samba-common-bin -y
 for i in "kodi" "vlc" "tortoisehg" "curl" "openjdk-8-jre" "bluetooth" "bluez"; do
 	sudo apt-get install "$i" -y
 done
@@ -250,6 +251,17 @@ sudo rm /usr/lib/vlc/lua/playlist/youtube.*
 sudo curl "http://git.videolan.org/?p=vlc.git;a=blob_plain;f=share/lua/playlist/youtube.lua;hb=HEAD" -o /usr/lib/vlc/lua/playlist/youtube.lua
 http://addons.videolan.org/content/show.php/+Youtube+playlist?content=149909
 sudo mv Downloads/playlist_youtube.lua /usr/lib/vlc/lua/playlist/
+
+### cameras ###
+fswebcam --no-banner -r 2592x1944 -d /dev/video0 ~/Public/pi_camera.jpg
+fswebcam --no-banner -r 640x480 -d /dev/video1 ~/Public/usb_camera.jpg
+ffmpeg -y -f video4linux2 -s 640x480 -t 5.7 -i /dev/video0 /home/pi/Public/pi_camera.avi
+ffmpeg -y -f video4linux2 -s 640x480 -t 5.7 -i /dev/video1 /home/pi/Public/usb_camera.avi
+
+### email ###
+sudo nano /etc/ssmtp/ssmtp.conf
+echo "This is a test" | ssmtp arad.rgb@gmail.com
+mpack -s "New Camera" ~/Public/usb_camera_02.jpg arad.rgb@gmail.com
 
 ### infra ###
 cd ~/Public && git clone https://github.com/arduino12/infra
