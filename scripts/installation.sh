@@ -77,7 +77,7 @@ for i in "kodi" "vlc" "tortoisehg" "curl" "openjdk-8-jre" "bluetooth" "bluez"; d
 done
 
 ### python3.6 ###
-RELEASE=3.6.1
+RELEASE=3.6.2
 # install dependencies
 sudo apt-get install libbz2-dev liblzma-dev libsqlite3-dev libncurses5-dev libgdbm-dev zlib1g-dev libreadline-dev libssl-dev tk-dev -y
 # download and build Python
@@ -89,7 +89,7 @@ cd Python-$RELEASE
 ./configure
 make
 sudo make install
-sudo rm -rf ~/python3
+sudo rm -rf ~/python3/
 cd ~
 
 ### python3 packages ###
