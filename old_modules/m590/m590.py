@@ -71,7 +71,7 @@ class M590(ATProtocol):
         if self._last_sms is not None:
             args = self._last_sms
             self._last_sms = None
-            self._logger.info('_last_sms: %s event: %s', args, event)
+            self._logger.debug('_last_sms: %s event: %s', args, event)
             try:
                 text = self.decode_ucs2(event)
             except Exception:
@@ -117,9 +117,9 @@ class M590(ATProtocol):
         self.send_command('AT+CPBW=1,"{}",129,"CNUM"'.format(number))
 
     def send_sms(self, number, text):
-        self._logger.debug('send_sms TO: %s TEXT: %s', number, text)
+        self._logger.info('send_sms TEXT: %s TO: %s', text, number)
         self.send_packet('AT+CMGS="{}"'.format(number))
-        time.sleep(1)
+        time.sleep(0.4)
         self.send_command(self.encode_ucs2(text), timeout=10, terminator=b'\x1A')
 
     def normalize_phone_number(self, number):
