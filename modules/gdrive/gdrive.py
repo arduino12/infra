@@ -13,9 +13,9 @@ class Gdrive(object):
     def gdrive_command(self, *args):
         cmd = ' '.join(['gdrive', '-c', os.path.dirname(self.service_account),
             '--service-account', os.path.basename(self.service_account)] + list(args))
-        self._logger.debug('popen: ', cmd)
+        self._logger.debug('popen: %s', cmd)
         ret = os.popen(cmd).read().strip()
-        self._logger.debug('stdout: ', ret)
+        self._logger.debug('stdout: %s', ret)
         return ret
 
     def upload_file(self, file_path, delete=False, share=False, parent_directory=None, name=None, description=None):
