@@ -25,9 +25,7 @@ class ATProtocol(serial.threaded.Protocol):
     def _run_event(self):
         while True:
             try:
-                self._logger.debug('_run_event: start')
                 self._handle_event(self.events.get())
-                self._logger.debug('_run_event: end')
             except:
                 self._logger.exception('_run_event')
 
