@@ -102,20 +102,6 @@ class M590(ATProtocol):
     def get_csq(self):
         return self.send_command('AT+CSQ')
 
-    def get_sim_number(self):
-        cnum = self.send_command('AT+CNUM')
-        try:
-            return cnum[0].split('"')[3]
-        except:
-            self._logger.error('empty CNUM, use self.set_sim_number first time before calling get_sim_number')
-            return '0'
-    
-    def set_sim_number(self, number):
-        self.send_command('AT+CUSD=1')
-        self.send_command('AT+CPBS="ON"')
-        self.send_command('AT+CPBR=1')
-        self.send_command('AT+CPBW=1,"{}",129,"CNUM"'.format(number))
-
     def send_sms(self, number, text):
         self._logger.info('send_sms TEXT: %s TO: %s', text, number)
         self.send_packet('AT+CMGS="{}"'.format(number))
