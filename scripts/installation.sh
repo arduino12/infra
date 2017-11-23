@@ -18,7 +18,7 @@
 # now ssh to its pi@192.168.1.X
 
 ### user ###
-default: pi raspberry
+# default: pi raspberry
 # set password to "none"
 echo -ne "none\nnone\n" | sudo passwd pi
 echo -ne "none\nnone\n" | sudo passwd root
@@ -36,9 +36,10 @@ sudo sh -c "echo 'pi3-disable-bt' >> /boot/config.txt"
 sudo sh -c "echo 'dtoverlay=pi3-disable-wifi' >> /boot/config.txt"
 sudo sh -c "echo 'max_usb_current=1' >> /boot/config.txt"
 sudo sh -c "echo 'dtparam=audio=off' >> /boot/config.txt"
+sudo sh -c "echo 'consoleblank=0' >> /boot/config.txt"
 
 ### aliases ###
-nano /home/pi/.bash_aliases
+sudo nano /home/pi/.bash_aliases
 alias ll='ls -lhA'
 alias ..='cd ..'
 alias df='df -H'
@@ -71,7 +72,7 @@ sudo rpi-update
 sudo chmod +x *.sh
 
 ### apps ###
-sudo apt-get install fswebcam git samba samba-common-bin -y
+sudo apt-get install fswebcam ffmpeg git samba samba-common-bin -y
 for i in "kodi" "vlc" "tortoisehg" "curl" "openjdk-8-jre" "bluetooth" "bluez"; do
 	sudo apt-get install "$i" -y
 done
@@ -94,11 +95,11 @@ cd ~
 
 ### python3 packages ###
 sudo pip3 install --upgrade pip
-sudo pip3 install --upgrade ipython rpyc pyserial pygsheets
-# sudo pip3 install --upgrade Pillow
-python3 -m pip install django
+sudo pip3 install --upgrade ipython rpyc pyserial pygsheets pyshorteners
+sudo pip3 install --upgrade PiCamera gpac
 sudo apt-get install libsdl-dev libsdl-image1.2-dev libsdl-mixer1.2-dev libsdl-ttf2.0-dev libsmpeg-dev libportmidi-dev libavformat-dev libswscale-dev -y # python3-dev python3-numpy -y
-sudo pip3 install --upgrade pygame
+sudo pip3 install --upgrade Pillow pygame
+python3 -m pip install django
 
 ### systemd service ###
 sudo sh -c "cat > /lib/systemd/system/uv_bicycle.service <<EOF
@@ -253,19 +254,32 @@ http://addons.videolan.org/content/show.php/+Youtube+playlist?content=149909
 sudo mv Downloads/playlist_youtube.lua /usr/lib/vlc/lua/playlist/
 
 ### cameras ###
+# sudo raspi-config -> Interfacing Options -> Camera -> YES
+sudo modprobe bcm2835-v4l2 # map pi camera to /dev/videoX
 fswebcam --no-banner -r 2592x1944 -d /dev/video0 ~/Public/pi_camera.jpg
 fswebcam --no-banner -r 640x480 -d /dev/video1 ~/Public/usb_camera.jpg
 ffmpeg -y -f video4linux2 -s 640x480 -t 5.7 -i /dev/video0 /home/pi/Public/pi_camera.avi
 ffmpeg -y -f video4linux2 -s 640x480 -t 5.7 -i /dev/video1 /home/pi/Public/usb_camera.avi
 
 ### email ###
-sudo nano /etc/ssmtp/ssmtp.conf
+sudo sh -c "cat > /etc/ssmtp/ssmtp.conf <<EOF
+root=mada.drive1@gmail.com
+mailhub=smtp.gmail.com:587
+FromLineOverride=YES
+AuthUser=mada.drive1@gmail.com
+AuthPass=PASSWORD
+UseSTARTTLS=YES
+UseTLS=YES
+EOF"
 echo "This is a test" | ssmtp arad.rgb@gmail.com
 mpack -s "New Camera" ~/Public/usb_camera_02.jpg arad.rgb@gmail.com
 
 ### infra ###
 cd ~/Public && git clone https://github.com/arduino12/infra
 touch ~/Public/__init__.py
+
+### change visudo editor ###
+sudo update-alternatives --config editor
 
 ### links ###
 # https://mtantawy.com/quick-tip-how-to-update-to-latest-kodi-16-jarvis-on-raspberry-pi/
