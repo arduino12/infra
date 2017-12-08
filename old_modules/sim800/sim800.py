@@ -104,8 +104,11 @@ class Sim800(ATProtocol):
         try:
             _, number, _, _, _, send_time, _ = event.split('"')
         except Exception:
-            self._logger.warning('_sms_recived error: %s', event)
-            return
+            try:
+                _, number, _, send_time, _ = event.split('"')
+            except Exception:
+                self._logger.warning('_sms_recived error: %s', event)
+                return
         number = self.decode_ucs2(number)
         send_time = datetime.datetime.strptime(send_time.split('+')[0], '%y/%m/%d,%H:%M:%S')
         self._last_sms = (number, send_time)
