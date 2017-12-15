@@ -42,7 +42,8 @@ def hasattrs(obj, *attrs):
 
 def delattrs(obj, *attrs):
     for attr in to_list(*attrs):
-        delattr(obj, attr)
+        if hasattr(obj, attr):
+            delattr(obj, attr)
 
 
 def cpyattrs(src, dst, *attrs):
