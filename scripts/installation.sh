@@ -23,20 +23,26 @@
 echo -ne "none\nnone\n" | sudo passwd pi
 echo -ne "none\nnone\n" | sudo passwd root
 
+### hostname ###
+sudo nano /etc/hosts
+sudo nano /etc/hostname
+sudo /etc/init.d/hostname.sh
+sudo reboot
+
 ### info ###
 cat /proc/cpuinfo
 
 ### config ###
 # update, set hostname to rpi, set localisation timezone to asia jerusalem, advanced expand filesystem
 sudo raspi-config
-sudo sh -c "echo 'display_rotate=2' >> /boot/config.txt"
-sudo sh -c "echo 'enable_uart=1' >> /boot/config.txt"
-sudo sh -c "echo 'audio_pwm_mode=2' >> /boot/config.txt"
+sudo sh -c "echo 'dtparam=audio=off' >> /boot/config.txt"
+sudo sh -c "echo 'max_usb_current=1' >> /boot/config.txt"
 sudo sh -c "echo 'pi3-disable-bt' >> /boot/config.txt"
 sudo sh -c "echo 'dtoverlay=pi3-disable-wifi' >> /boot/config.txt"
-sudo sh -c "echo 'max_usb_current=1' >> /boot/config.txt"
-sudo sh -c "echo 'dtparam=audio=off' >> /boot/config.txt"
+sudo sh -c "echo 'enable_uart=1' >> /boot/config.txt"
 sudo sh -c "echo 'consoleblank=0' >> /boot/config.txt"
+sudo sh -c "echo 'audio_pwm_mode=2' >> /boot/config.txt"
+sudo sh -c "echo 'display_rotate=2' >> /boot/config.txt"
 
 ### aliases ###
 sudo nano /home/pi/.bash_aliases
@@ -44,17 +50,11 @@ alias ll='ls -lhA'
 alias ..='cd ..'
 alias df='df -H'
 alias du='du -ch'
-chr() {
-  printf \\$(printf '%03o' $1)\\n
-}
-ord() {
-  printf '%d\n' "'$1"
-}
 
 ### wifi ###
 sudo nano /etc/wpa_supplicant/wpa_supplicant.conf
 network={
-	ssid="MADA"
+	ssid="Mada"
 	key_mgmt=NONE
 	# psk="madaorgil"
 	# key_mgmt=WPA-PSK
@@ -72,13 +72,13 @@ sudo rpi-update
 sudo chmod +x *.sh
 
 ### apps ###
-sudo apt-get install fswebcam ffmpeg git samba samba-common-bin -y
+sudo apt-get install fswebcam ffmpeg ssmtp mpack git samba samba-common-bin oracle-java8-jdk -y
 for i in "kodi" "vlc" "tortoisehg" "curl" "openjdk-8-jre" "bluetooth" "bluez"; do
 	sudo apt-get install "$i" -y
 done
 
 ### python3.6 ###
-RELEASE=3.6.2
+RELEASE=3.6.4
 # install dependencies
 sudo apt-get install libbz2-dev liblzma-dev libsqlite3-dev libncurses5-dev libgdbm-dev zlib1g-dev libreadline-dev libssl-dev tk-dev -y
 # download and build Python
@@ -94,11 +94,11 @@ sudo rm -rf ~/python3/
 cd ~
 
 ### python3 packages ###
-sudo pip3 install --upgrade pip
-sudo pip3 install --upgrade ipython rpyc pyserial pygsheets pyshorteners
+sudo pip3 install --upgrade
+sudo pip3 install --upgrade ipython rpyc pyserial pygsheets pyshorteners speedtest-cli bluepy rpi.gpio
 sudo pip3 install --upgrade PiCamera gpac
 sudo apt-get install libsdl-dev libsdl-image1.2-dev libsdl-mixer1.2-dev libsdl-ttf2.0-dev libsmpeg-dev libportmidi-dev libavformat-dev libswscale-dev -y # python3-dev python3-numpy -y
-sudo pip3 install --upgrade Pillow pygame
+sudo pip3 install --upgrade Pillow pygame plumbum
 python3 -m pip install django
 
 ### systemd service ###
@@ -121,6 +121,9 @@ sudo systemctl start uv_bicycle.service
 # save journalctl logs
 sudo mkdir /var/log/journal
 sudo systemd-tmpfiles --create --prefix /var/log/journal
+sudo sh -c "cat >> /etc/systemd/journald.conf <<EOF
+SystemMaxUse=10M
+EOF"
 sudo systemctl restart systemd-journald
 # check status
 sudo systemctl status uv_bicycle.service -l
@@ -140,18 +143,37 @@ sudo bluetoothctl
 [bluetooth]# default-agent
 [bluetooth]# scan on
 [bluetooth]# pair 98:D3:31:B2:CA:59
-[bluetooth]# trust 98:D3:31:B2:CA:59
 [bluetooth]# quit
 # create serial dev for bt connection
+sudo rfcomm bind 0 98:D3:31:90:30:3A
 sudo rfcomm connect hci0 98:D3:31:90:30:3A &
+sudo rfcomm release 0
+ls /dev/rfcomm*
+# update bluez
+wget http://www.kernel.org/pub/linux/bluetooth/bluez-5.48.tar.xz
+tar xvf bluez-5.48.tar.xz
+cd bluez-5.48/
+export LDFLAGS=-lrt
+./configure --prefix=/usr --sysconfdir=/etc --localstatedir=/var --enable-library -disable-systemd
+make
+sudo make install
+# sudo cp attrib/gatttool /usr/bin/
+sudo hcitool lescan
+sudo gatttool -b 28:37:37:1A:D3:CF -I
+[30:AE:A4:21:75:A6][LE]> connect
+[30:AE:A4:21:75:A6][LE]> char-write-cmd 0x002d 55555555555555555555555555555555
+[30:AE:A4:21:75:A6][LE]> char-read-hnd 0x002a
+# http://www.instructables.com/id/Control-Bluetooth-LE-Devices-From-A-Raspberry-Pi/ https://www.elinux.org/RPi_Bluetooth_LE
+sudo blescan
 
 ### serial ports ###
 # print dev info
 udevadm info -q path -n /dev/ttyUSB1
 # auto serial port shortcuts
-sudo nano /etc/udev/rules.d/90-usb-serial.rules
-SUBSYSTEM=="tty",KERNELS=="1-1.2:1.0",SYMLINK+="ttyAiGsm"
+sudo sh -c 'cat > /etc/udev/rules.d/90-usb-serial.rules <<EOF
+SUBSYSTEM=="tty",KERNELS=="1-1.2:1.0",SYMLINK+="ttyGsmUart"
 SUBSYSTEM=="tty",KERNELS=="1-1.4:1.0",SYMLINK+="ttyUvBicycle"
+EOF'
 # ttyUSB
 sudo chmod 666 /dev/ttyUSB0
 lsmod | grep cp210x
@@ -178,14 +200,17 @@ force user = pi
 wins support = yes
 
 [Public]
- comment=Shared Public
- path=/home/pi/Public
- browseable=Yes
- writeable=Yes
- guest ok=yes
- create mask=0777
- directory mask=0777
- public=yes
+ comment = Shared Public
+ path = /home/pi/Public
+ browseable = Yes
+ writeable = Yes
+ guest ok = yes
+ read only = no
+ guest ok = yes
+ create mask = 0777
+ directory mask = 0777
+ public = yes
+ force user = pi
 
 sudo /etc/init.d/samba restart
 
@@ -261,6 +286,39 @@ fswebcam --no-banner -r 640x480 -d /dev/video1 ~/Public/usb_camera.jpg
 ffmpeg -y -f video4linux2 -s 640x480 -t 5.7 -i /dev/video0 /home/pi/Public/pi_camera.avi
 ffmpeg -y -f video4linux2 -s 640x480 -t 5.7 -i /dev/video1 /home/pi/Public/usb_camera.avi
 
+### display ###
+# https://www.raspberrypi.org/forums/viewtopic.php?t=5851
+tvservice -e 'dmt 58 hdmi'
+sudo sh -c "cat >> /boot/config.txt <<EOF
+hdmi_force_hotplug=1
+hdmi_group=2
+hdmi_mode=87
+hdmi_cvt=800 480 60 6 0 0 0
+hdmi_drive=1
+# Enable touchscreen on Elecrow HDMI interface.
+dtparam=spi=on
+dtparam=i2c_arm=on
+dtoverlay=ads7846,cs=1,penirq=25,penirq_pull=2,speed=50000,keep_vref_on=0,swapxy=0,pmax=255,xohms=150,xmin=200,xmax=3900,ymin=200,ymax=3900
+dtoverlay=w1-gpio-pullup,gpiopin=4,extpullup=1
+EOF"
+sudo apt-get install xinput-calibrator -y
+# Click the Men button on the task bar, choose Preference -> Calibrate Touchscreen.
+sudo apt-get install xserver-xorg-input-evdev
+# be sure that evdev.conf has a higher number than 40-libinput.conf:
+sudo mv /usr/share/X11/xorg.conf.d/10-evdev.conf /usr/share/X11/xorg.conf.d/45-evdev.conf
+sudo reboot
+sudo sh -c 'cat >> /usr/share/X11/xorg.conf.d/99-calibration.conf <<EOF
+Section "InputClass"
+        Identifier      "calibration"
+        MatchProduct    "ADS7846 Touchscreen"
+        Option  "Calibration"   "125 3981 193 3936"
+        Option  "SwapAxes"      "0"
+EndSection
+EOF'
+# terminal
+sudo xauth add $(xauth list $DISPLAY)
+export DISPLAY=:0
+
 ### email ###
 sudo sh -c "cat > /etc/ssmtp/ssmtp.conf <<EOF
 root=mada.drive1@gmail.com
@@ -275,8 +333,9 @@ echo "This is a test" | ssmtp arad.rgb@gmail.com
 mpack -s "New Camera" ~/Public/usb_camera_02.jpg arad.rgb@gmail.com
 
 ### infra ###
-cd ~/Public && git clone https://github.com/arduino12/infra
+mkdir ~/Public
 touch ~/Public/__init__.py
+cd ~/Public && git clone https://github.com/arduino12/infra
 
 ### change visudo editor ###
 sudo update-alternatives --config editor
