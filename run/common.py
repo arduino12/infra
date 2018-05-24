@@ -26,3 +26,6 @@ LOGOR_COLOR_MAP = {
     'name': (Ansi.GREEN, Ansi.FAINT),
     'levelname': (Ansi.MAGENTA, Ansi.FAINT),
 }
+
+class Atters(object):
+    pass

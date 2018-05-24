@@ -5,7 +5,7 @@ import rpyc
 import rpyc.utils.server
 import IPython.terminal.embed as _ipython
 import common
-
+from rgbmatrix import RGBMatrix
 from infra.core import utils
 
 
@@ -15,6 +15,7 @@ class _App(object):
         self._app_ = None
         self._app_attrs_ = []
         self._app_module_ = importlib.import_module(app)
+        self._app_globals_ = common.Atters()
         self._base_app_module_ = importlib.import_module('infra.app.app')
         self._load_()
     
@@ -28,7 +29,7 @@ class _App(object):
 
     def _load_(self):
         self._app_ = getattr(self._app_module_, utils.module_to_class_name(
-            self._app_module_.__name__.rsplit('.', 1)[1]))()
+            self._app_module_.__name__.rsplit('.', 1)[1]))(self._app_globals_)
         self._app_._modules.extend([self._base_app_module_, self._app_module_])
         self._app_.reload = self._reload_
         utils.delattrs(self, self._app_attrs_)
