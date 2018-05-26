@@ -53,3 +53,17 @@ def cpyattrs(src, dst, *attrs):
 
 def get_exposed_attrs(obj):
     return [i for i in dir(obj) if not i.endswith('_')]
+
+
+def bits_list(value, size=None):
+    l = []
+    while value:
+        if size is not None:
+            if size <= 0:
+                return l
+            size -= 1
+        l.append(bool(value & 1))
+        value >>= 1
+    if size is not None:
+        l.extend([False] * size)
+    return l

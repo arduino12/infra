@@ -1,6 +1,6 @@
 
 class SubReg(object):
-    
+
     def __init__(self, start_bit, bits_count):
         self._reg = None
         self._name = None
@@ -33,7 +33,7 @@ class SubReg(object):
 
 
 class Register(object):
-    
+
     def __init__(self, address, bits_count, initial_value, **sub_regs):
         self._dev = None
         self._name = None
