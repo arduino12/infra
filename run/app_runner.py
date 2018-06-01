@@ -5,7 +5,6 @@ import rpyc
 import rpyc.utils.server
 import IPython.terminal.embed as _ipython
 import common
-from rgbmatrix import RGBMatrix
 from infra.core import utils
 
 
