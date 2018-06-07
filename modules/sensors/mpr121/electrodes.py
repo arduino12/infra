@@ -98,7 +98,7 @@ class Mpr121ElectrodesGrid(Mpr121Electrodes):
         Mpr121Electrodes.__init__(self, mpr121_map)
 
         for i in self.electrodes:
-            i.grid_indexes = (i.index % self.grid_sizes[0], i.index // self.grid_sizes[1])
+            i.grid_indexes = (i.index % self.grid_sizes[0], i.index // self.grid_sizes[0])
             i.top_left_pixel = (i.grid_indexes[0] * self.electrod_pixel_sizes[0],
                 i.grid_indexes[1] * self.electrod_pixel_sizes[1])
             i.mid_pixel = (i.top_left_pixel[0] + self.electrod_pixel_sizes[0] // 2,
