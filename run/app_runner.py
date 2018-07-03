@@ -41,11 +41,13 @@ class _App(object):
 
 
 class _AppService(rpyc.Service):
+
     _logger = logging.getLogger('rpyc')
     _logger.setLevel(logging.INFO)
-    def on_connect(self):
+
+    def on_connect(self, conn):
         self._logger.info('on_connect')
-        self._conn._config.update(dict(
+        conn._config.update(dict(
             allow_all_attrs = True,
             allow_pickle = True,
             allow_getattr = True,
@@ -57,7 +59,7 @@ class _AppService(rpyc.Service):
         ))
         self.exposed_app = globals()['app']
 
-    def on_disconnect(self):
+    def on_disconnect(self, conn):
         self._logger.info('on_disconnect')
 
 
