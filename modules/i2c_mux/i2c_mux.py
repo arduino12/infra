@@ -16,12 +16,6 @@ class MuxI2c(object):
     def __init__(self, i2c_address, i2c_mux_index, mux_addr_off):
         self.i2c_address = i2c_address
         self.mux_addr = mux_addr_off
-        if self.mux_addr is not None:
-            self.mux_addr += self._I2C_BASE_ADDRESS
-            self.mux_bitmask = 1 << i2c_mux_index
-            if self.mux_addr not in self._muxes:
-                self._muxes[self.mux_addr] = -1
-                self._safe_write_mux(self.mux_addr, 0)
 
         if self.bus is None:
             self.bus = smbus2.SMBus(self.I2C_CHANNEL)
@@ -33,6 +27,13 @@ class MuxI2c(object):
                 # http://www.raspberrypi.org/forums/viewtopic.php?f=44&t=15840
                 subprocess.check_call('chmod 666 {} && echo -n 1 > {}'.format(
                     self._BCM2708_SYSFS_REPEATED_START), shell=True)
+
+        if self.mux_addr is not None:
+            self.mux_addr += self._I2C_BASE_ADDRESS
+            self.mux_bitmask = 1 << i2c_mux_index
+            if self.mux_addr not in self._muxes:
+                self._muxes[self.mux_addr] = -1
+                self._safe_write_mux(self.mux_addr, 0)
 
     def _safe_write_mux(self, mux_addr, mux_bitmask):
         if self._muxes[mux_addr] == mux_bitmask:
