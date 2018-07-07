@@ -7,8 +7,8 @@ class Mpr121(object):
     _I2C_BASE_ADDRESS = 0x5A
     _ELECTRODES_RANGE = list(range(ELECTRODES_COUNT))
 
-    def __init__(self, i2c_address_offset=0, i2c_mux_index=0):
-        self._dev = i2c_mux.MuxI2c(self._I2C_BASE_ADDRESS + i2c_address_offset, i2c_mux_index)
+    def __init__(self, i2c_address_offset=0, i2c_mux_index=None, mux_addr_off=None):
+        self._dev = i2c_mux.MuxI2c(self._I2C_BASE_ADDRESS + i2c_address_offset, i2c_mux_index, mux_addr_off)
         self.regs = registers_tree.Registers(self._dev,
             touch_status=registers_tree.Register(0x00, 16, 0,
                 eleprox=registers_tree.SubReg(12, 1),

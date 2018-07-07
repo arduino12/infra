@@ -69,8 +69,8 @@ class Mpr121Electrodes(Electrodes):
     def __init__(self, mpr121_map):
         self.mprs = []
         electrodes_count = 0
-        for i2c_mux_index, i2c_address_offset, electrodes_map in mpr121_map:
-            mpr = mpr121.Mpr121(i2c_address_offset, i2c_mux_index)
+        for mux_addr_off, i2c_mux_index, i2c_address_offset, electrodes_map in mpr121_map:
+            mpr = mpr121.Mpr121(i2c_address_offset, i2c_mux_index, mux_addr_off)
             mpr.electrodes_map = electrodes_map
             electrodes_map_len = len(mpr.electrodes_map)
             electrodes_count += electrodes_map_len
