@@ -42,6 +42,8 @@ class MuxI2c(object):
             self.bus.write_byte(mux_addr, mux_bitmask)
         except:
             self._logger.error('i2c error: write to 0x%02X', mux_addr)
+        else:
+            self._muxes[mux_addr] = mux_bitmask
 
     def _set_mux(self):
         if self.mux_addr is None:
