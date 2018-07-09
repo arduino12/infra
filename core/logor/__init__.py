@@ -24,12 +24,16 @@ class ColorFormatter(logging.Formatter):
     def __init__(self, fmt=None, datefmt=None, color_map=None):
         if color_map is None:
             color_map = {}
-        self._fields_codes = {k: v for k, v in color_map.items() if type(k) is str}
-        self._levels_codes = {k: v for k, v in color_map.items() if type(k) is int}
+        self._fields_codes = {
+            k: v for k, v in color_map.items() if type(k) is str}
+        self._levels_codes = {
+            k: v for k, v in color_map.items() if type(k) is int}
         logging.Formatter.__init__(self, fmt, datefmt)
 
     def format(self, record):
-        record.msg = Ansi.style(record.msg, *self._levels_codes.get(record.levelno, (Ansi.WHITE, Ansi.BRIGHT)))
+        record.msg = Ansi.style(
+            record.msg, *self._levels_codes.get(
+                record.levelno, (Ansi.WHITE, Ansi.BRIGHT)))
         for field, codes in self._fields_codes.items():
             setattr(record, field, Ansi.style(getattr(record, field), *codes))
         return logging.Formatter.format(self, record)

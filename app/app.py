@@ -15,11 +15,16 @@ class App(object):
             for i in spam_loggers:
                 try:
                     logging.getLogger(i).setLevel(logging.WARNING)
-                except:
+                except Exception:
                     pass
-        if utils.hasattrs(constants, 'LOGOR_FORMATS', 'LOGOR_LEVEL', 'LOGOR_COLOR_MAP'):
-            Logor(constants.LOGOR_FORMATS, constants.LOGOR_LEVEL, constants.LOGOR_COLOR_MAP)
-        self._app_logger.log(logging.root.level, 'App started, Logging level: %s', logging.getLevelName(logging.root.level))
+        if utils.hasattrs(
+                constants, 'LOGOR_FORMATS', 'LOGOR_LEVEL', 'LOGOR_COLOR_MAP'):
+            Logor(
+                constants.LOGOR_FORMATS, constants.LOGOR_LEVEL,
+                constants.LOGOR_COLOR_MAP)
+        self._app_logger.log(
+            logging.root.level, 'App started, Logging level: %s',
+            logging.getLevelName(logging.root.level))
 
     def __exit__(self):
         self._app_logger.warn('App ended\n')

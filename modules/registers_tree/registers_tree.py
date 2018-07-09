@@ -38,6 +38,7 @@ class Register(object):
         self._dev = None
         self._name = None
         self._address = address
+        self._write_hook = sub_regs.pop('write_hook', lambda x: None)
         self._bits_count = bits_count
         self._bytes_count = (self._bits_count + 7) // 8
         self._values = self._to_values(initial_value)
@@ -54,17 +55,21 @@ class Register(object):
         return values
 
     def _to_values(self, value):
-        return self._crop_values([(value >> (i * 8)) & 0xFF for i in range(self._bytes_count)])
+        return self._crop_values(
+            [(value >> (i * 8)) & 0xFF for i in range(self._bytes_count)])
 
     def _read(self):
-        self._values = self._crop_values(self._dev.read(self._address, self._bytes_count))
+        self._values = self._crop_values(
+            self._dev.read(self._address, self._bytes_count))
         return self._values
 
     def _write(self, values, overwrite=True):
         values = self._crop_values(values)
         if overwrite or self._values != values:
             self._values = values
+            self._write_hook(True)
             self._dev.write(self._address, self._values)
+            self._write_hook(False)
 
     def get(self, read=True):
         if read:
@@ -83,14 +88,14 @@ class Register(object):
         return self.get()
 
     def __str__(self):
-        return '{self._name} [{self._address:#04x}] = {value:#0{size}x}'.format(
+        return '{self._name} [{self._address:#04x}]={value:#0{size}x}'.format(
             self=self,
             value=self.get(),
             size=self._bytes_count * 2 + 2)
 
 
 class Registers(object):
-    
+
     def __init__(self, dev, **regs):
         self._dev = dev
         self._regs = regs.values()

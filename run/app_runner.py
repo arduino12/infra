@@ -9,7 +9,7 @@ from infra.core import utils
 
 
 class _App(object):
-    
+
     def __init__(self, app):
         self._app_ = None
         self._app_attrs_ = []
@@ -17,7 +17,7 @@ class _App(object):
         self._app_globals_ = common.Atters()
         self._base_app_module_ = importlib.import_module('infra.app.app')
         self._load_()
-    
+
     def _reload_(self):
         self._unload_()
         importlib.invalidate_caches()
@@ -48,15 +48,14 @@ class _AppService(rpyc.Service):
     def on_connect(self, conn):
         self._logger.info('on_connect')
         conn._config.update(dict(
-            allow_all_attrs = True,
-            allow_pickle = True,
-            allow_getattr = True,
-            allow_setattr = True,
-            allow_delattr = True,
-            import_custom_exceptions = True,
-            instantiate_custom_exceptions = True,
-            instantiate_oldstyle_exceptions = True,
-        ))
+            allow_all_attrs=True,
+            allow_pickle=True,
+            allow_getattr=True,
+            allow_setattr=True,
+            allow_delattr=True,
+            import_custom_exceptions=True,
+            instantiate_custom_exceptions=True,
+            instantiate_oldstyle_exceptions=True))
         self.exposed_app = globals()['app']
 
     def on_disconnect(self, conn):
@@ -100,7 +99,7 @@ if __name__ == '__main__':
     _args, _ = _parser.parse_known_args()
     app = _App(_args.app)
     if _args.cmd:
-        exec(_args.cmd) # eval(_args.cmd)
+        exec(_args.cmd)  # eval(_args.cmd)
     if _args.interface == 'ipython':
         _ipython.InteractiveShellEmbed()()
     elif _args.interface == 'rpyc':

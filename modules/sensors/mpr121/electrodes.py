@@ -72,14 +72,16 @@ class Mpr121Electrodes(Electrodes):
         self.mprs = []
         elec_count = 0
         for mux_addr, mux_index, dev_addr, elec_map in mpr121_map:
-            mpr = mpr121.Mpr121(dev_addr, mux_index, mux_addr)
+            elec_map_len = len(elec_map)
+            mpr = mpr121.Mpr121(dev_addr, mux_index, mux_addr, elec_map_len)
             mpr.elec_map = elec_map
-            elec_map_len = len(mpr.elec_map)
             elec_count += elec_map_len
-            mpr.config_regs(elec_map_len)
             self.mprs.append(mpr)
-
         Electrodes.__init__(self, elec_count)
+
+    def init(self):
+        for mpr in self.mprs:
+            mpr.config_regs()
 
     def update(self):
         bitmasks = [mpr._dev.read(0x00, 1)[0] for mpr in self.mprs]

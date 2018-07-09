@@ -56,14 +56,14 @@ def get_exposed_attrs(obj):
 
 
 def bits_list(value, size=None):
-    l = []
+    lst = []
     while value:
         if size is not None:
             if size <= 0:
-                return l
+                return lst
             size -= 1
-        l.append(bool(value & 1))
+        lst.append(bool(value & 1))
         value >>= 1
     if size is not None:
-        l.extend([False] * size)
-    return l
+        lst.extend([False] * size)
+    return lst

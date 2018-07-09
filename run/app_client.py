@@ -28,9 +28,11 @@ class _App(object):
     def reload(self, reload=True):
         app = self._conn_.root.exposed_app
         if reload:
-            utils.delattrs(self, [i for i in app._app_attrs_ if i not in self._app_attrs_])
+            utils.delattrs(self, [
+                i for i in app._app_attrs_ if i not in self._app_attrs_])
             app.reload()
-        utils.cpyattrs(app, self, [i for i in app._app_attrs_ if i not in self._app_attrs_])
+        utils.cpyattrs(app, self, [
+            i for i in app._app_attrs_ if i not in self._app_attrs_])
 
 
 if __name__ == '__main__':
@@ -66,7 +68,7 @@ if __name__ == '__main__':
     except Exception:
         pass
     if app._args.cmd:
-        exec(app._args.cmd) # eval(app._args.cmd)
+        exec(app._args.cmd)  # eval(app._args.cmd)
     else:
         _ipython.InteractiveShellEmbed()()
     app.disconnect()
