@@ -1,5 +1,6 @@
-# from infra.core import utils utils.bits_list(i, 8)
-from infra.modules.sensors.mpr121 import mpr121
+from . import mpr121
+from infra.core import utils
+from infra.modules.i2c_mux import i2c_mux
 
 
 class Electrode(object):
@@ -71,13 +72,27 @@ class Mpr121Electrodes(Electrodes):
     def __init__(self, mpr121_map):
         self.mprs = []
         elec_count = 0
-        for mux_addr, mux_index, dev_addr, elec_map in mpr121_map:
+        for mux_addr, mux_idx, dev_addr, elec_map in mpr121_map:
             elec_map_len = len(elec_map)
-            mpr = mpr121.Mpr121(dev_addr, mux_index, mux_addr, elec_map_len)
+            dev = i2c_mux.MuxI2c(
+                mpr121.Mpr121._I2C_BASE_ADDRESS + dev_addr, mux_idx, mux_addr)
+            mpr = mpr121.Mpr121(dev, elec_map_len)
             mpr.elec_map = elec_map
             elec_count += elec_map_len
             self.mprs.append(mpr)
+        self._all_mprs_dev = utils.Atter()
+        self._all_mprs_dev.read = self._all_mprs_read
+        self._all_mprs_dev.write = self._all_mprs_write
+        self.all_mprs = mpr121.Mpr121(self._all_mprs_dev, elec_map_len)
+        self.all_mprs.config_regs()
         Electrodes.__init__(self, elec_count)
+
+    def _all_mprs_read(self, reg_address, size=1):
+        return self.mprs[0]._dev.read(reg_address, size)
+
+    def _all_mprs_write(self, reg_address, data):
+        for mpr in self.mprs:
+            mpr._dev.write(reg_address, data)
 
     def init(self):
         for mpr in self.mprs:

@@ -1,4 +1,3 @@
-from infra.modules.i2c_mux import i2c_mux
 from infra.modules.registers_tree import registers_tree
 
 
@@ -7,12 +6,10 @@ class Mpr121(object):
     _I2C_BASE_ADDRESS = 0x5A
     _ELECTRODES_RANGE = list(range(ELECTRODES_COUNT))
 
-    def __init__(self, dev_addr=0, mux_index=None, mux_addr=None,
-            elec_count=ELECTRODES_COUNT):
-        self.elec_count = elec_count
+    def __init__(self, dev, elec_count=ELECTRODES_COUNT):
         self._configured = False
-        self._dev = i2c_mux.MuxI2c(
-            self._I2C_BASE_ADDRESS + dev_addr, mux_index, mux_addr)
+        self._dev = dev
+        self.elec_count = elec_count
         self.regs = registers_tree.Registers(
             self._dev,
             touch_status=registers_tree.Register(
