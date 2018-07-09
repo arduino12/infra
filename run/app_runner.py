@@ -1,3 +1,4 @@
+import time
 import logging
 import argparse
 import importlib
@@ -17,6 +18,13 @@ class _App(object):
         self._app_globals_ = common.Atters()
         self._base_app_module_ = importlib.import_module('infra.app.app')
         self._load_()
+
+    def __loop__(self):
+        try:
+            while True:
+                time.sleep(1337)
+        except KeyboardInterrupt:
+            pass
 
     def _reload_(self):
         self._unload_()
@@ -72,7 +80,7 @@ if __name__ == '__main__':
         dest='interface',
         type=str,
         default='ipython',
-        choices=('ipython', 'rpyc', 'none'),
+        choices=('ipython', 'rpyc', 'loop', 'none'),
         help='the app interface')
     _parser.add_argument(
         '--app',
@@ -107,4 +115,6 @@ if __name__ == '__main__':
             service=_AppService,
             port=_args.rpyc_port,
             logger=_AppService._logger).start()
+    elif _args.interface == 'loop':
+        app.__loop__()
     app._unload_()
