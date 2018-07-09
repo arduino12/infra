@@ -4,42 +4,44 @@ from infra.modules.sensors.mpr121 import mpr121
 
 class Electrode(object):
 
-    STATUS_RELEASED = 0
-    STATUS_NEWLY_TOUCHED = 1
-    STATUS_TOUCHED = 2
-    STATUS_NEWLY_RELEASED = 3
+    ST_RELEASED = 0
+    ST_NEWLY_TOUCHED = 1
+    ST_TOUCHED = 2
+    ST_NEWLY_RELEASED = 3
 
     NEXT_STATUS = {
-        False: [STATUS_RELEASED, STATUS_NEWLY_RELEASED, STATUS_NEWLY_RELEASED, STATUS_RELEASED],
-        True: [STATUS_NEWLY_TOUCHED, STATUS_TOUCHED, STATUS_TOUCHED, STATUS_NEWLY_TOUCHED],
+        True: [ST_NEWLY_TOUCHED, ST_TOUCHED, ST_TOUCHED, ST_NEWLY_TOUCHED],
+        False: [ST_RELEASED, ST_NEWLY_RELEASED, ST_NEWLY_RELEASED, ST_RELEASED]
     }
 
     def __init__(self):
-        self.status = self.STATUS_RELEASED
+        self.status = self.ST_RELEASED
 
     def _set_touched(self, touched):
         self.status = self.NEXT_STATUS[bool(touched)][self.status]
 
     def is_released(self):
-        return self.status == self.STATUS_RELEASED or self.status == self.STATUS_NEWLY_RELEASED
+        return self.status == self.ST_RELEASED or \
+            self.status == self.ST_NEWLY_RELEASED
 
     def is_newly_touched(self):
-        return self.status == self.STATUS_NEWLY_TOUCHED
+        return self.status == self.ST_NEWLY_TOUCHED
 
     def is_touched(self):
-        return self.status == self.STATUS_TOUCHED or self.status == self.STATUS_NEWLY_TOUCHED
+        return self.status == self.ST_TOUCHED or \
+            self.status == self.ST_NEWLY_TOUCHED
 
     def is_newly_released(self):
-        return self.status == self.STATUS_NEWLY_RELEASED
+        return self.status == self.ST_NEWLY_RELEASED
 
 
 class Electrodes(object):
 
-    def __init__(self, electrodes_count):
+    def __init__(self, elec_count):
         self.electrodes = []
-        self.electrodes_count = electrodes_count
+        self.elec_count = elec_count
 
-        for i in range(self.electrodes_count):
+        for i in range(self.elec_count):
             e = Electrode()
             e.index = i
             self.electrodes.append(e)
@@ -68,21 +70,21 @@ class Mpr121Electrodes(Electrodes):
 
     def __init__(self, mpr121_map):
         self.mprs = []
-        electrodes_count = 0
-        for mux_addr_off, i2c_mux_index, i2c_address_offset, electrodes_map in mpr121_map:
-            mpr = mpr121.Mpr121(i2c_address_offset, i2c_mux_index, mux_addr_off)
-            mpr.electrodes_map = electrodes_map
-            electrodes_map_len = len(mpr.electrodes_map)
-            electrodes_count += electrodes_map_len
-            mpr.config_regs(electrodes_map_len)
+        elec_count = 0
+        for mux_addr, mux_index, dev_addr, elec_map in mpr121_map:
+            mpr = mpr121.Mpr121(dev_addr, mux_index, mux_addr)
+            mpr.elec_map = elec_map
+            elec_map_len = len(mpr.elec_map)
+            elec_count += elec_map_len
+            mpr.config_regs(elec_map_len)
             self.mprs.append(mpr)
 
-        Electrodes.__init__(self, electrodes_count)
+        Electrodes.__init__(self, elec_count)
 
     def update(self):
         bitmasks = [mpr._dev.read(0x00, 1)[0] for mpr in self.mprs]
         for bitmask, mpr in zip(bitmasks, self.mprs):
-            for i in mpr.electrodes_map:
+            for i in mpr.elec_map:
                 self.electrodes[i]._set_touched(bitmask & 1)
                 bitmask >>= 1
 
@@ -92,14 +94,18 @@ class Mpr121ElectrodesGrid(Mpr121Electrodes):
     def __init__(self, mpr121_map, grid_sizes, pixel_sizes):
         self.grid_sizes = grid_sizes
         self.pixel_sizes = pixel_sizes
-        self.electrod_pixel_sizes = (
-            self.pixel_sizes[0] // self.grid_sizes[0], self.pixel_sizes[1] // self.grid_sizes[1])
+        self.elec_pixel_sizes = (
+            self.pixel_sizes[0] // self.grid_sizes[0],
+            self.pixel_sizes[1] // self.grid_sizes[1])
 
         Mpr121Electrodes.__init__(self, mpr121_map)
 
         for i in self.electrodes:
-            i.grid_indexes = (i.index % self.grid_sizes[0], i.index // self.grid_sizes[0])
-            i.top_left_pixel = (i.grid_indexes[0] * self.electrod_pixel_sizes[0],
-                i.grid_indexes[1] * self.electrod_pixel_sizes[1])
-            i.mid_pixel = (i.top_left_pixel[0] + self.electrod_pixel_sizes[0] // 2,
-                i.top_left_pixel[1] + self.electrod_pixel_sizes[1] // 2)
+            i.grid_indexes = (
+                i.index % self.grid_sizes[0], i.index // self.grid_sizes[0])
+            i.top_left_pixel = (
+                i.grid_indexes[0] * self.elec_pixel_sizes[0],
+                i.grid_indexes[1] * self.elec_pixel_sizes[1])
+            i.mid_pixel = (
+                i.top_left_pixel[0] + self.elec_pixel_sizes[0] // 2,
+                i.top_left_pixel[1] + self.elec_pixel_sizes[1] // 2)
