@@ -47,10 +47,6 @@ class Electrodes(object):
             e.index = i
             self.electrodes.append(e)
 
-    def _update(self, electrodes):
-        for i in self.electrodes:
-            i._set_touched()
-
     def _filter_by(self, func):
         return [i for i in self.electrodes if func(i)]
 
