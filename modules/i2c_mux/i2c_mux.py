@@ -16,6 +16,7 @@ class MuxI2c(object):
     def __init__(self, i2c_address, i2c_mux_index, mux_addr_off):
         self.i2c_address = i2c_address
         self.mux_addr = mux_addr_off
+        self._io_msg = 'Failed %%s 0x%02X [0x%%02X] %%s bytes' % (i2c_address,)
 
         if self.bus is None:
             self.bus = smbus2.SMBus(self.I2C_CHANNEL)
@@ -29,6 +30,7 @@ class MuxI2c(object):
                     self._BCM2708_SYSFS_RS_PATH), shell=True)
 
         if self.mux_addr is not None:
+            self._io_msg += ', mux %s index %s' % (mux_addr_off, i2c_mux_index)
             self.mux_addr += self._I2C_BASE_ADDRESS
             self.mux_bitmask = 1 << i2c_mux_index
             if self.mux_addr not in self._muxes:
@@ -41,7 +43,8 @@ class MuxI2c(object):
         try:
             self.bus.write_byte(mux_addr, mux_bitmask)
         except Exception:
-            self._logger.error('i2c error: write to 0x%02X', mux_addr)
+            self._logger.error(
+                'Failed writing 0x%02X to mux 0x%02X', mux_bitmask, mux_addr)
         else:
             self._muxes[mux_addr] = mux_bitmask
 
@@ -58,7 +61,7 @@ class MuxI2c(object):
             return self.bus.read_i2c_block_data(
                 self.i2c_address, reg_address, size)
         except Exception:
-            self._logger.error('i2c error: read from 0x%02X', self.i2c_address)
+            self._logger.error(self._io_msg, 'reading from', reg_address, size)
             return [0] * size
 
     def write(self, reg_address, data):
@@ -66,4 +69,4 @@ class MuxI2c(object):
         try:
             self.bus.write_i2c_block_data(self.i2c_address, reg_address, data)
         except Exception:
-            self._logger.error('i2c error: write to 0x%02X', self.i2c_address)
+            self._logger.error(self._io_msg, 'writing to', reg_address, data)
