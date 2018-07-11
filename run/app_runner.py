@@ -1,4 +1,6 @@
+import sys
 import time
+import signal
 import logging
 import argparse
 import importlib
@@ -51,10 +53,9 @@ class _App(object):
 class _AppService(rpyc.Service):
 
     _logger = logging.getLogger('rpyc')
-    _logger.setLevel(logging.INFO)
+    _logger.setLevel(logging.WARNING)
 
     def on_connect(self, conn):
-        self._logger.info('on_connect')
         conn._config.update(dict(
             allow_all_attrs=True,
             allow_pickle=True,
@@ -65,9 +66,10 @@ class _AppService(rpyc.Service):
             instantiate_custom_exceptions=True,
             instantiate_oldstyle_exceptions=True))
         self.exposed_app = globals()['app']
+        self.exposed_app._app_.__rpyc_connect__(conn)
 
     def on_disconnect(self, conn):
-        self._logger.info('on_disconnect')
+        self.exposed_app._app_.__rpyc_disconnect__(conn)
 
 
 if __name__ == '__main__':
@@ -106,6 +108,19 @@ if __name__ == '__main__':
 
     _args, _ = _parser.parse_known_args()
     app = _App(_args.app)
+
+    _signaled = False
+
+    def _signal_handler(signum, frame):
+        global _signaled
+        if not _signaled:
+            _signaled = True
+            app._app_logger.info('Signal %s received, exiting...', signum)
+            app._unload_()
+            sys.exit(0)
+    for _i in (signal.SIGTERM, signal.SIGINT):
+        signal.signal(_i, _signal_handler)
+
     if _args.cmd:
         exec(_args.cmd)  # eval(_args.cmd)
     if _args.interface == 'ipython':
@@ -117,4 +132,5 @@ if __name__ == '__main__':
             logger=_AppService._logger).start()
     elif _args.interface == 'loop':
         app.__loop__()
+
     app._unload_()

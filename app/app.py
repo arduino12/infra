@@ -23,8 +23,14 @@ class App(object):
                 constants.LOGOR_FORMATS, constants.LOGOR_LEVEL,
                 constants.LOGOR_COLOR_MAP)
         self._app_logger.log(
-            logging.root.level, 'App started, Logging level: %s',
+            logging.root.level, 'App started, logging level: %s',
             logging.getLevelName(logging.root.level))
+
+    def __rpyc_connect__(self, conn):
+        self._app_logger.info('App rpyc connected')
+
+    def __rpyc_disconnect__(self, conn):
+        self._app_logger.info('App rpyc disconnected')
 
     def __exit__(self):
         self._app_logger.warn('App ended\n')
