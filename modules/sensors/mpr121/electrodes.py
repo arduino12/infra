@@ -1,7 +1,3 @@
-from . import mpr121
-from infra.core import utils
-from infra.modules.i2c_mux import i2c_mux
-
 
 class Electrode(object):
 
@@ -63,55 +59,15 @@ class Electrodes(object):
         return self._filter_by(Electrode.is_newly_released)
 
 
-class Mpr121Electrodes(Electrodes):
+class ElectrodesGrid(Electrodes):
 
-    def __init__(self, mpr121_map):
-        self.mprs = []
-        elec_count = 0
-        for mux_addr, mux_idx, dev_addr, elec_map in mpr121_map:
-            elec_map_len = len(elec_map)
-            dev = i2c_mux.MuxI2c(
-                mpr121.Mpr121._I2C_BASE_ADDRESS + dev_addr, mux_idx, mux_addr)
-            mpr = mpr121.Mpr121(dev, elec_map_len)
-            mpr.elec_map = elec_map
-            elec_count += elec_map_len
-            self.mprs.append(mpr)
-        self._all_mprs_dev = utils.Atter()
-        self._all_mprs_dev.read = self._all_mprs_read
-        self._all_mprs_dev.write = self._all_mprs_write
-        self.all_mprs = mpr121.Mpr121(self._all_mprs_dev, elec_map_len)
-        self.all_mprs.config_regs()
-        Electrodes.__init__(self, elec_count)
-
-    def _all_mprs_read(self, reg_address, size=1):
-        return self.mprs[0]._dev.read(reg_address, size)
-
-    def _all_mprs_write(self, reg_address, data):
-        for mpr in self.mprs:
-            mpr._dev.write(reg_address, data)
-
-    def init(self):
-        for mpr in self.mprs:
-            mpr.config_regs()
-
-    def update(self):
-        bitmasks = [mpr._dev.read(0x00, 1)[0] for mpr in self.mprs]
-        for bitmask, mpr in zip(bitmasks, self.mprs):
-            for i in mpr.elec_map:
-                self.electrodes[i]._set_touched(bitmask & 1)
-                bitmask >>= 1
-
-
-class Mpr121ElectrodesGrid(Mpr121Electrodes):
-
-    def __init__(self, mpr121_map, grid_sizes, pixel_sizes):
+    def __init__(self, grid_sizes, pixel_sizes):
+        Electrodes.__init__(self, grid_sizes[0] * grid_sizes[1])
         self.grid_sizes = grid_sizes
         self.pixel_sizes = pixel_sizes
         self.elec_pixel_sizes = (
             self.pixel_sizes[0] // self.grid_sizes[0],
             self.pixel_sizes[1] // self.grid_sizes[1])
-
-        Mpr121Electrodes.__init__(self, mpr121_map)
 
         for i in self.electrodes:
             i.grid_indexes = (
@@ -119,6 +75,7 @@ class Mpr121ElectrodesGrid(Mpr121Electrodes):
             i.top_left_pixel = (
                 i.grid_indexes[0] * self.elec_pixel_sizes[0],
                 i.grid_indexes[1] * self.elec_pixel_sizes[1])
+            i.rect = i.top_left_pixel + self.elec_pixel_sizes
             i.mid_pixel = (
                 i.top_left_pixel[0] + self.elec_pixel_sizes[0] // 2,
                 i.top_left_pixel[1] + self.elec_pixel_sizes[1] // 2)
