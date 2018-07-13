@@ -146,7 +146,7 @@ class Mpr121(object):
         # 7 readings for touch and release
         self.regs.debounce.set(touch=7, release=7)
         # charge electrodes with 63mA in 1us
-        self.regs.afe_configuration.set(cdc=63, ffi=0, esi=0, sfi=0, cdt=2)
+        self.regs.afe_configuration.set(cdc=63, ffi=0, esi=0, sfi=3, cdt=2)
         # auto config baseline and filters
         self.regs.auto_configuration.set(
             ace=1, are=1, bva=3, usl=800 >> 2, lsl=600 >> 2, tl=700 >> 2)
