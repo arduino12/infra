@@ -46,17 +46,20 @@ sudo sh -c "echo 'display_rotate=2' >> /boot/config.txt"
 
 ### aliases ###
 sudo nano /home/pi/.bash_aliases
+alias sudo='sudo '
 alias ll='ls -lhA'
 alias ..='cd ..'
 alias df='df -H'
 alias du='du -ch'
+alias read_cpu_temperature='/opt/vc/bin/vcgencmd measure_temp'
 
 ### wifi ###
 sudo nano /etc/wpa_supplicant/wpa_supplicant.conf
 network={
-	ssid="Mada"
-	key_mgmt=NONE
-	# psk="madaorgil"
+	ssid="Mada_WiFi_1"
+	ssid="Mada_Bet_Melacha"
+	psk="madaorgil"
+	# key_mgmt=NONE
 	# key_mgmt=WPA-PSK
 }
 
@@ -84,7 +87,7 @@ sudo rpi-update
 sudo chmod +x *.sh
 
 ### apps ###
-sudo apt-get install fswebcam ffmpeg ssmtp mpack git samba samba-common-bin oracle-java8-jdk -y
+sudo apt-get install fswebcam ffmpeg ssmtp mpack git samba samba-common-bin i2c-tools python3-pip oracle-java8-jdk -y
 for i in "kodi" "vlc" "tortoisehg" "openjdk-8-jre" "bluetooth" "bluez"; do
 	sudo apt-get install "$i" -y
 done
@@ -106,7 +109,7 @@ sudo rm -rf ~/python3/
 cd ~
 
 ### python3 packages ###
-sudo pip3 install --upgrade pip
+sudo pip3 install --upgrade pip pep8 autopep8
 sudo pip3 install --upgrade ipython rpyc pyserial pygsheets pyshorteners speedtest-cli rpi.gpio PiCamera smbus2 pyalsaaudio
 sudo pip3 install --upgrade gpac bluepy	
 sudo apt-get install libsdl-dev libsdl-image1.2-dev libsdl-mixer1.2-dev libsdl-ttf2.0-dev libsmpeg-dev libportmidi-dev libavformat-dev libswscale-dev python3-dev python3-numpy -y
