@@ -1,5 +1,4 @@
 import sys
-import time
 import signal
 import logging
 import argparse
@@ -24,7 +23,7 @@ class _App(object):
     def __loop__(self):
         try:
             while True:
-                time.sleep(1337)
+                self._app_.__loop__()
         except KeyboardInterrupt:
             pass
 

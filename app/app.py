@@ -1,3 +1,4 @@
+import time
 import logging
 from infra.core import utils
 from infra.core.logor import Logor
@@ -25,6 +26,10 @@ class App(object):
         self._app_logger.log(
             logging.root.level, 'App started, logging level: %s',
             logging.getLevelName(logging.root.level))
+
+    def __loop__(self):
+        while True:
+            time.sleep(1337)
 
     def __rpyc_connect__(self, conn):
         self._app_logger.info('App rpyc connected')

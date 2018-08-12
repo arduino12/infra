@@ -57,7 +57,6 @@ alias read_cpu_temperature='/opt/vc/bin/vcgencmd measure_temp'
 sudo nano /etc/wpa_supplicant/wpa_supplicant.conf
 network={
 	ssid="Mada_WiFi_1"
-	ssid="Mada_Bet_Melacha"
 	psk="madaorgil"
 	# key_mgmt=NONE
 	# key_mgmt=WPA-PSK
@@ -109,11 +108,11 @@ sudo rm -rf ~/python3/
 cd ~
 
 ### python3 packages ###
-sudo pip3 install --upgrade pip pep8 autopep8
-sudo pip3 install --upgrade ipython rpyc pyserial pygsheets pyshorteners speedtest-cli rpi.gpio PiCamera smbus2 pyalsaaudio
-sudo pip3 install --upgrade gpac bluepy	
+pip3 install --upgrade pip pep8 autopep8
+pip3 install --upgrade ipython rpyc pyserial pygsheets pyshorteners speedtest-cli rpi.gpio PiCamera smbus2 pyalsaaudio
+pip3 install --upgrade gpac bluepy	
 sudo apt-get install libsdl-dev libsdl-image1.2-dev libsdl-mixer1.2-dev libsdl-ttf2.0-dev libsmpeg-dev libportmidi-dev libavformat-dev libswscale-dev python3-dev python3-numpy -y
-sudo pip3 install --upgrade Pillow pygame plumbum
+pip3 install --upgrade Pillow pygame PyOpenGL plumbum
 python3 -m pip install django
 
 ### systemd service ###
